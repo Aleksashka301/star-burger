@@ -1,5 +1,3 @@
-import json
-
 from django.http import JsonResponse
 from django.templatetags.static import static
 from rest_framework.decorators import api_view
@@ -63,6 +61,13 @@ def product_list_api(request):
 @api_view(['POST'])
 def register_order(request):
     order_details = request.data
+    if not order_details.get('products'):
+        return Response('Поле products: Обязательное поле с типом list и оно не должно быть пустым!')
+    elif isinstance(order_details['products'], str):
+        return Response(
+            f'Поле products: Ожидался list со значениями, но был получен "{type(order_details['products'])}".'
+        )
+
     order = Order.objects.create(
         address=order_details['address'],
         first_name=order_details['firstname'],
@@ -78,4 +83,3 @@ def register_order(request):
         )
 
     return Response(order_details)
-
