@@ -126,9 +126,9 @@ class RestaurantMenuItem(models.Model):
 
 class Order(models.Model):
     address = models.TextField(verbose_name='Адрес')
-    first_name = models.CharField(verbose_name='Имя', max_length=100)
-    last_name = models.CharField(verbose_name='Фамилия', max_length=100, null=True, blank=True)
-    phone = PhoneNumberField(region='RU', verbose_name='Телефон')
+    firstname = models.CharField(verbose_name='Имя', max_length=100)
+    lastname = models.CharField(verbose_name='Фамилия', max_length=100, null=True, blank=True)
+    phonenumber = PhoneNumberField(region='RU', verbose_name='Телефон')
 
     class Meta:
         verbose_name = 'Заказ'
@@ -140,7 +140,7 @@ class Order(models.Model):
 
 class OrderDetail(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='product', verbose_name='продукт',)
+    products = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='product', verbose_name='Продукт',)
     quantity = models.IntegerField(verbose_name='Количество', validators=[MinValueValidator(0), MaxValueValidator(4)])
 
     class Meta:
@@ -148,4 +148,4 @@ class OrderDetail(models.Model):
         verbose_name_plural = 'Детали заказа'
 
     def __str__(self):
-        return f'{self.product}'
+        return f'{self.products}'
