@@ -1,9 +1,11 @@
 import phonenumbers
-
+from django.core.validators import MinLengthValidator
 from django.http import JsonResponse
 from django.templatetags.static import static
+from rest_framework import serializers
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.serializers import ModelSerializer
 from rest_framework.templatetags.rest_framework import items
 
 from .models import Product, Order, OrderDetail
@@ -61,49 +63,40 @@ def product_list_api(request):
     })
 
 
+class OrderDetailSerializer(ModelSerializer):
+    product = serializers.PrimaryKeyRelatedField(source='products', queryset=Product.objects.all())
+    class Meta:
+        model = OrderDetail
+        fields = ['product', 'quantity']
+
+
+class OrderSerializer(ModelSerializer):
+    products = OrderDetailSerializer(many=True)
+
+    class Meta:
+        model = Order
+        fields = ['address', 'firstname', 'lastname', 'phonenumber', 'products']
+
+    def validate_products(self, value):
+        if not value:
+            raise serializers.ValidationError("Список товаров не может быть пустым.")
+        return value
+
+
 @api_view(['POST'])
 def register_order(request):
-    order_details = request.data
-    product_ids = list(Product.objects.values_list('id', flat=True))
-
-    for key in ['products', 'firstname', 'lastname', 'phonenumber', 'address']:
-        if not key in order_details:
-            return Response(f'Поле {key}: Обязательное поле, не должно быть пустым!')
-
-    for key, detail in items(order_details):
-        if not detail:
-            return Response(f'Поле {key}: Обязательное поле, не должно быть пустым!')
-
-    if not isinstance(order_details['products'], list):
-        return Response(
-            f'Поле products: Ожидался list со значениями, но был получен "{type(order_details['products'])}".'
-        )
-
-    phone = phonenumbers.parse(order_details['phonenumber'], 'RU')
-    if not phonenumbers.is_valid_number(phone):
-        return Response(f'Поле phonenumber: Введён не правильный номер телефона {order_details['phonenumber']}')
-    
-    if not order_details['products'][0]['product'] in product_ids:
-        return Response(f'Поле product: Введён не верный ключ продукта {order_details['products'][0]['product']}')
-
-    for field in ['firstname', 'lastname', 'phonenumber', 'address']:
-        if not isinstance(order_details[field], str):
-            return Response(
-                f'Поле {field}: Ожидалась строка со значением, но был получен "{type(order_details[field])}".'
-            )
+    serializer = OrderSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
 
     order = Order.objects.create(
-        address=order_details['address'],
-        first_name=order_details['firstname'],
-        last_name=order_details['lastname'],
-        phone=order_details['phonenumber'],
+        address=serializer.validated_data['address'],
+        firstname=serializer.validated_data['firstname'],
+        lastname=serializer.validated_data['lastname'],
+        phonenumber=serializer.validated_data['phonenumber']
     )
 
-    for product in order_details['products']:
-        OrderDetail.objects.create(
-            order=order,
-            product_id=product['product'],
-            quantity=product['quantity'],
-        )
+    order_detail_fields = serializer.validated_data['products']
+    order_detail = [OrderDetail(order=order, **fields) for fields in order_detail_fields]
+    OrderDetail.objects.bulk_create(order_detail)
 
-    return Response(order_details)
+    return Response({'order_id': order.id})
