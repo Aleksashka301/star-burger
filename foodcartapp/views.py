@@ -71,11 +71,11 @@ class OrderDetailSerializer(ModelSerializer):
 
 
 class OrderSerializer(ModelSerializer):
-    products = OrderDetailSerializer(many=True)
+    products = OrderDetailSerializer(many=True, source='items')
 
     class Meta:
         model = Order
-        fields = ['address', 'firstname', 'lastname', 'phonenumber', 'products']
+        fields = ['id', 'firstname', 'lastname', 'phonenumber', 'address', 'products']
 
     def validate_products(self, value):
         if not value:
@@ -95,8 +95,10 @@ def register_order(request):
         phonenumber=serializer.validated_data['phonenumber']
     )
 
-    order_detail_fields = serializer.validated_data['products']
+    order_detail_fields = serializer.validated_data['items']
     order_detail = [OrderDetail(order=order, **fields) for fields in order_detail_fields]
     OrderDetail.objects.bulk_create(order_detail)
 
-    return Response({'order_id': order.id})
+    order_serializer = OrderSerializer(order)
+    print(order_serializer.data)
+    return Response(order_serializer.data)
