@@ -1,12 +1,9 @@
-import phonenumbers
-from django.core.validators import MinLengthValidator
 from django.http import JsonResponse
 from django.templatetags.static import static
 from rest_framework import serializers
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer
-from rest_framework.templatetags.rest_framework import items
 
 from .models import Product, Order, OrderDetail
 
