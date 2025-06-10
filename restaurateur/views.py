@@ -95,13 +95,9 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.prefetch_related('items__products').values(
-        'id',
-        'firstname',
-        'lastname',
-        'phonenumber',
-        'address',
-    ).annotate(total_price=Sum(F('items__quantity') * F('items__products__price')))
+    orders = Order.objects.prefetch_related('items__products').values().annotate(
+        total_price=Sum(F('items__quantity') * F('items__products__price'))
+    )
     order_details = []
 
     for order in orders:
