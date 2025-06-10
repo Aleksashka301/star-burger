@@ -1,14 +1,17 @@
+from itertools import count
+from turtledemo.chaos import f
+
 from django import forms
+from django.db.models import Count, ExpressionWrapper, F, Sum
+from django.forms import DecimalField
 from django.shortcuts import redirect, render
 from django.views import View
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import user_passes_test
-
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 
-
-from foodcartapp.models import Product, Restaurant, Order
+from foodcartapp.models import Product, Restaurant, Order, OrderDetail
 
 
 class Login(forms.Form):
@@ -92,7 +95,13 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.values()
+    orders = Order.objects.prefetch_related('items__products').values(
+        'id',
+        'firstname',
+        'lastname',
+        'phonenumber',
+        'address',
+    ).annotate(total_price=Sum(F('items__quantity') * F('items__products__price')))
     order_details = []
 
     for order in orders:
@@ -101,5 +110,8 @@ def view_orders(request):
             'phonenumber': order['phonenumber'],
             'address': order['address'],
             'buyer': f'{order['firstname']} {order['lastname']}' if order['lastname'] else order['firstname'],
+            'total_price': order['total_price'] if order['total_price'] else 0
         })
+
+
     return render(request, template_name='order_items.html', context={'order_items': order_details})
