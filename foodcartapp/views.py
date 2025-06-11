@@ -93,9 +93,18 @@ def register_order(request):
     )
 
     order_detail_fields = serializer.validated_data['items']
-    order_detail = [OrderDetail(order=order, **fields) for fields in order_detail_fields]
-    OrderDetail.objects.bulk_create(order_detail)
+    order_details = []
 
-    order_serializer = OrderSerializer(order)
-    print(order_serializer.data)
-    return Response(order_serializer.data)
+    for fields in order_detail_fields:
+        product = fields['products']
+        quantity = fields['quantity']
+        order_details.append(OrderDetail(
+            order=order,
+            products=product,
+            quantity=quantity,
+            price=product.price
+        ))
+
+    OrderDetail.objects.bulk_create(order_details)
+
+    return Response(OrderSerializer(order).data)
