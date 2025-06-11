@@ -1,3 +1,5 @@
+from itertools import product
+
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 from phonenumber_field.modelfields import PhoneNumberField
@@ -141,7 +143,8 @@ class Order(models.Model):
 class OrderDetail(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     products = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='product', verbose_name='Продукт',)
-    quantity = models.IntegerField(verbose_name='Количество', validators=[MinValueValidator(0), MaxValueValidator(4)])
+    quantity = models.IntegerField(verbose_name='Количество', validators=[MinValueValidator(1)])
+    price = models.DecimalField(verbose_name='Цена', max_digits=7, decimal_places=2, validators=[MinValueValidator(1)])
 
     class Meta:
         verbose_name = 'Детали заказа'
