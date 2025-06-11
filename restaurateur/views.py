@@ -1,9 +1,5 @@
-from itertools import count
-from turtledemo.chaos import f
-
 from django import forms
-from django.db.models import Count, ExpressionWrapper, F, Sum
-from django.forms import DecimalField
+from django.db.models import F, Sum
 from django.shortcuts import redirect, render
 from django.views import View
 from django.urls import reverse_lazy
@@ -108,6 +104,5 @@ def view_orders(request):
             'buyer': f'{order['firstname']} {order['lastname']}' if order['lastname'] else order['firstname'],
             'total_price': order['total_price'] if order['total_price'] else 0
         })
-
 
     return render(request, template_name='order_items.html', context={'order_items': order_details})
