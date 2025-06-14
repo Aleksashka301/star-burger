@@ -146,6 +146,7 @@ class Order(models.Model):
         db_index=True,
         verbose_name='Статус',
     )
+    creation = models.DateTimeField(verbose_name='Создание заказа', auto_now_add=True, db_index=True)
 
     class Meta:
         verbose_name = 'Заказ'
@@ -167,3 +168,14 @@ class OrderDetail(models.Model):
 
     def __str__(self):
         return f'{self.products}'
+
+
+class OrderTime(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='times')
+    accept = models.DateTimeField(verbose_name='Заказ принят')
+    work = models.DateTimeField(verbose_name='Готовка заказа')
+    delivery = models.DateTimeField(verbose_name='Доставка заказа')
+    completed = models.DateTimeField(verbose_name='Заказ выполнен')
+
+    class Meta:
+        verbose_name = 'Время заказа'
