@@ -139,6 +139,7 @@ class Order(models.Model):
     firstname = models.CharField(verbose_name='Имя', max_length=100)
     lastname = models.CharField(verbose_name='Фамилия', max_length=100, null=True, blank=True)
     phonenumber = PhoneNumberField(region='RU', verbose_name='Телефон')
+    comment = models.TextField(verbose_name='Комментарий', default='', null=True, blank=True)
     status = models.CharField(
         choices=ORDER_STATUS_CHOICES,
         default='new', max_length=10,
