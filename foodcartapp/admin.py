@@ -119,7 +119,8 @@ class OrderDetailInLine(admin.TabularInline):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('id', 'firstname', 'lastname', 'address', 'phonenumber')
+    list_display = ('id', 'firstname', 'lastname', 'address', 'phonenumber', 'status')
+    list_filter = ('status',)
     inlines = [OrderDetailInLine,]
 
     def response_change(self, request, obj):
