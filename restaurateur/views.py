@@ -99,14 +99,15 @@ def view_orders(request):
     for order in orders:
         if order.status == 'completed':
             continue
-            
+
         order_details.append({
             'id': order.id,
             'status': order.get_status_display(),
             'phonenumber': order.phonenumber,
             'address': order.address,
             'buyer': f'{order.firstname} {order.lastname}' if order.lastname else order.firstname,
-            'total_price': order.total_price if order.total_price else 0
+            'total_price': order.total_price if order.total_price else 0,
+            'comment': order.comment,
         })
 
     return render(request, template_name='order_items.html', context={'order_items': order_details})
