@@ -102,12 +102,13 @@ def view_orders(request):
 
         order_details.append({
             'id': order.id,
-            'status': order.get_status_display(),
+            'buyer': f'{order.firstname} {order.lastname}' if order.lastname else order.firstname,
             'phonenumber': order.phonenumber,
             'address': order.address,
-            'buyer': f'{order.firstname} {order.lastname}' if order.lastname else order.firstname,
             'total_price': order.total_price if order.total_price else 0,
             'comment': order.comment,
+            'status': order.get_status_display(),
+            'payment_method': order.get_payment_method_display(),
         })
 
     return render(request, template_name='order_items.html', context={'order_items': order_details})
