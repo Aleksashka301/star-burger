@@ -134,17 +134,28 @@ class Order(models.Model):
         ('delivery', 'доставка'),
         ('completed', 'завершён'),
     }
+    PAYMENT_METHODS = {
+        ('cash', 'наличные'),
+        ('card', 'карта'),
+    }
 
-    address = models.TextField(verbose_name='Адрес')
     firstname = models.CharField(verbose_name='Имя', max_length=100)
     lastname = models.CharField(verbose_name='Фамилия', max_length=100, null=True, blank=True)
     phonenumber = PhoneNumberField(region='RU', verbose_name='Телефон')
+    address = models.TextField(verbose_name='Адрес')
     comment = models.TextField(verbose_name='Комментарий', default='', null=True, blank=True)
     status = models.CharField(
         choices=ORDER_STATUS_CHOICES,
-        default='new', max_length=10,
+        default='new',
+        max_length=10,
         db_index=True,
         verbose_name='Статус',
+    )
+    payment_method = models.CharField(
+        choices=PAYMENT_METHODS,
+        max_length=10,
+        db_index=True,
+        verbose_name='Способ оплаты'
     )
     creation = models.DateTimeField(verbose_name='Создание заказа', auto_now_add=True, db_index=True)
 
