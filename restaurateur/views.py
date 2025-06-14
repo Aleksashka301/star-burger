@@ -91,18 +91,22 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.prefetch_related('items__products').values().annotate(
+    orders = Order.objects.prefetch_related('items__products').annotate(
         total_price=Sum(F('items__quantity') * F('items__price'))
     )
     order_details = []
 
     for order in orders:
+        if order.status == 'completed':
+            continue
+            
         order_details.append({
-            'id': order['id'],
-            'phonenumber': order['phonenumber'],
-            'address': order['address'],
-            'buyer': f'{order['firstname']} {order['lastname']}' if order['lastname'] else order['firstname'],
-            'total_price': order['total_price'] if order['total_price'] else 0
+            'id': order.id,
+            'status': order.get_status_display(),
+            'phonenumber': order.phonenumber,
+            'address': order.address,
+            'buyer': f'{order.firstname} {order.lastname}' if order.lastname else order.firstname,
+            'total_price': order.total_price if order.total_price else 0
         })
 
     return render(request, template_name='order_items.html', context={'order_items': order_details})
