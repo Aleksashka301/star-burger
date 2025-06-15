@@ -1,3 +1,4 @@
+from collections import defaultdict
 from django import forms
 from django.db.models import F, Sum
 from django.shortcuts import redirect, render
@@ -7,7 +8,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 
-from foodcartapp.models import Product, Restaurant, Order, OrderDetail
+from foodcartapp.models import Product, Restaurant, Order, OrderDetail, RestaurantMenuItem
 
 
 class Login(forms.Form):
@@ -94,11 +95,33 @@ def view_orders(request):
     orders = Order.objects.prefetch_related('items__products').annotate(
         total_price=Sum(F('items__quantity') * F('items__price'))
     )
+
+    menu_items = RestaurantMenuItem.objects.filter(availability=True).values('product_id', 'restaurant__name')
+    product_to_restaurants = defaultdict(set)
+
+    for item in menu_items:
+        product_to_restaurants[item['product_id']].add(item['restaurant__name'])
+
     order_details = []
 
     for order in orders:
         if order.status == 'completed':
             continue
+
+        product_ids = [item.products.id for item in order.items.all()]
+        restaurant_sets = [
+            product_to_restaurants[product_id]
+            for product_id in product_ids
+            if product_id in product_to_restaurants
+        ]
+
+        if restaurant_sets:
+            available_restaurants = set.union(*restaurant_sets)
+        else:
+            available_restaurants = set()
+
+        order.status_update()
+        order.save()
 
         order_details.append({
             'id': order.id,
@@ -109,6 +132,8 @@ def view_orders(request):
             'comment': order.comment,
             'status': order.get_status_display(),
             'payment_method': order.get_payment_method_display(),
+            'available_restaurants': available_restaurants,
+            'restaurant': order.restaurant,
         })
 
     return render(request, template_name='order_items.html', context={'order_items': order_details})
