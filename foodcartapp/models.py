@@ -1,7 +1,5 @@
-from itertools import product
-
 from django.db import models
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import MinValueValidator
 from phonenumber_field.modelfields import PhoneNumberField
 
 
@@ -130,7 +128,7 @@ class Order(models.Model):
     ORDER_STATUS_CHOICES = {
         ('new', 'новый'),
         ('accept', 'принят'),
-        ('work', 'в работе'),
+        ('work', 'готовят'),
         ('delivery', 'доставка'),
         ('completed', 'завершён'),
     }
@@ -157,7 +155,19 @@ class Order(models.Model):
         db_index=True,
         verbose_name='Способ оплаты'
     )
+    restaurant = models.ForeignKey(
+        Restaurant,
+        on_delete=models.CASCADE,
+        related_name='restaurants',
+        null=True,
+        blank=True,
+        verbose_name='Ресторан',
+    )
     creation = models.DateTimeField(verbose_name='Создание заказа', auto_now_add=True, db_index=True)
+
+    def status_update(self):
+        if self.restaurant:
+            self.status = 'work'
 
     class Meta:
         verbose_name = 'Заказ'
