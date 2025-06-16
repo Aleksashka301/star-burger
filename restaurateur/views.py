@@ -7,8 +7,10 @@ from django.urls import reverse_lazy
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
+from environs import Env
 
-from foodcartapp.models import Product, Restaurant, Order, OrderDetail, RestaurantMenuItem
+from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
+from .services import get_distance
 
 
 class Login(forms.Form):
@@ -96,15 +98,24 @@ def view_orders(request):
         total_price=Sum(F('items__quantity') * F('items__price'))
     )
 
-    menu_items = RestaurantMenuItem.objects.filter(availability=True).values('product_id', 'restaurant__name')
+    products_in_restaurants = RestaurantMenuItem.objects.filter(availability=True).values(
+        'product_id',
+        'restaurant__name',
+        'restaurant__address'
+    )
     product_to_restaurants = defaultdict(set)
 
-    for item in menu_items:
-        product_to_restaurants[item['product_id']].add(item['restaurant__name'])
+    for item in products_in_restaurants:
+        product_to_restaurants[item['product_id']].add(
+            (item['restaurant__name'], item['restaurant__address'])
+        )
 
     order_details = []
 
     for order in orders:
+        order.status_update()
+        order.save()
+
         if order.status == 'completed':
             continue
 
@@ -116,12 +127,19 @@ def view_orders(request):
         ]
 
         if restaurant_sets:
-            available_restaurants = set.union(*restaurant_sets)
+            common_restaurants = set.intersection(*restaurant_sets)
         else:
-            available_restaurants = set()
+            common_restaurants = set()
 
-        order.status_update()
-        order.save()
+        restaurants_with_distances = []
+        for name, address in common_restaurants:
+            restaurants_and_distance = get_distance(yandex_key, address, order.address)
+            restaurants_with_distances.append({
+                'name': name.replace('Star Burger', 'BRB'),
+                'distance': f'{restaurants_and_distance} км' if restaurants_and_distance else 'Расстояние не определено',
+            })
+        else:
+            restaurants_with_distances.sort(key=lambda foood_distance: foood_distance['distance'])
 
         order_details.append({
             'id': order.id,
@@ -132,8 +150,14 @@ def view_orders(request):
             'comment': order.comment,
             'status': order.get_status_display(),
             'payment_method': order.get_payment_method_display(),
-            'available_restaurants': available_restaurants,
-            'restaurant': order.restaurant,
+            'available_restaurants': restaurants_with_distances,
+            'restaurant': str(order.restaurant).replace('Star Burger', 'BRB') if order.restaurant else '',
         })
 
     return render(request, template_name='order_items.html', context={'order_items': order_details})
+
+
+env = Env()
+env.read_env()
+
+yandex_key = env.str('YANDEX_KEY')
