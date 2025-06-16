@@ -37,12 +37,18 @@
         <td>{{ item.comment }}</td>
         <td>
           {% if not item.restaurant %}
-            <details>
-              <summary>Рестораны готовые выполнить заказ</summary>
-                {% for restaurant in item.available_restaurants %}
-                  <p>- {{ restaurant }}<br></p>
-                {% endfor %}
-            </details>
+            {% if not item.available_restaurants %}
+              <p>Нет ресторанов готовых выполнить заказ полностью</p>
+            {% else %}
+              <details>
+                <summary>Рестораны готовые выполнить заказ</summary>
+                  <ul>
+                  {% for restaurant in item.available_restaurants %}
+                    <li> {{ restaurant.name }} - {{ restaurant.distance }}<br></li>
+                  {% endfor %}
+                  </ul>
+              </details>
+            {% endif %}
           {% else %}
             <p>Готовит {{ item.restaurant }}</p>
           {% endif %}
