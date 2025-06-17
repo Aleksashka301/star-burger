@@ -136,7 +136,8 @@ def view_orders(request):
             restaurants_and_distance = get_distance(yandex_key, address, order.address)
             restaurants_with_distances.append({
                 'name': name.replace('Star Burger', 'BRB'),
-                'distance': f'{restaurants_and_distance} км' if restaurants_and_distance else 'Расстояние не определено',
+                'distance':
+                    f'{restaurants_and_distance} км' if restaurants_and_distance else 'Расстояние не определено',
             })
         else:
             restaurants_with_distances.sort(key=lambda foood_distance: foood_distance['distance'])
