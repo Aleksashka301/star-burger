@@ -134,6 +134,7 @@ class OrderAdmin(admin.ModelAdmin):
     list_display = ('id', 'firstname', 'lastname', 'address', 'phonenumber', 'status')
     list_filter = ('status',)
     readonly_fields = ['creation']
+    autocomplete_fields = ['restaurant']
     inlines = [OrderDetailInLine, OrderTimeInLine]
 
     def response_change(self, request, obj):
