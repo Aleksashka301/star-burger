@@ -166,8 +166,7 @@ class Order(models.Model):
     creation = models.DateTimeField(verbose_name='Создание заказа', auto_now_add=True, db_index=True)
 
     def status_update(self):
-        if self.restaurant:
-            self.status = 'work'
+        self.status = 'work'
 
     class Meta:
         verbose_name = 'Заказ'
