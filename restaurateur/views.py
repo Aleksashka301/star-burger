@@ -10,7 +10,7 @@ from django.contrib.auth import views as auth_views
 from environs import Env
 
 from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
-from .services import get_distance
+from .services import get_common_restaurants, get_restaurants_with_distances
 
 
 class Login(forms.Form):
@@ -110,37 +110,22 @@ def view_orders(request):
             (item['restaurant__name'], item['restaurant__address'])
         )
 
+    address_cache = {}
     order_details = []
 
     for order in orders:
-        order.status_update()
-        order.save()
-
         if order.status == 'completed':
             continue
 
-        product_ids = [item.products.id for item in order.items.all()]
-        restaurant_sets = [
-            product_to_restaurants[product_id]
-            for product_id in product_ids
-            if product_id in product_to_restaurants
-        ]
+        if order.restaurant and order.status not in ['work', 'delivery']:
+            order.status_update()
+            order.save()
 
-        if restaurant_sets:
-            common_restaurants = set.intersection(*restaurant_sets)
-        else:
-            common_restaurants = set()
+        common_restaurants = get_common_restaurants(order, product_to_restaurants)
 
-        restaurants_with_distances = []
-        for name, address in common_restaurants:
-            restaurants_and_distance = get_distance(yandex_key, address, order.address)
-            restaurants_with_distances.append({
-                'name': name.replace('Star Burger', 'BRB'),
-                'distance':
-                    f'{restaurants_and_distance} км' if restaurants_and_distance else 'Расстояние не определено',
-            })
-        else:
-            restaurants_with_distances.sort(key=lambda foood_distance: foood_distance['distance'])
+        restaurants_with_distances = get_restaurants_with_distances(
+            common_restaurants, order.address, yandex_key, address_cache
+        )
 
         order_details.append({
             'id': order.id,
