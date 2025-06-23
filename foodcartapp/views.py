@@ -1,11 +1,10 @@
 from django.http import JsonResponse
 from django.templatetags.static import static
-from rest_framework import serializers
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.serializers import ModelSerializer
 
-from .models import Product, Order, OrderDetail
+from .models import Product
+from .serializers import OrderSerializer
 
 
 def banners_list_api(request):
@@ -60,51 +59,10 @@ def product_list_api(request):
     })
 
 
-class OrderDetailSerializer(ModelSerializer):
-    product = serializers.PrimaryKeyRelatedField(source='products', queryset=Product.objects.all())
-    class Meta:
-        model = OrderDetail
-        fields = ['product', 'quantity']
-
-
-class OrderSerializer(ModelSerializer):
-    products = OrderDetailSerializer(many=True, source='items')
-
-    class Meta:
-        model = Order
-        fields = ['id', 'firstname', 'lastname', 'phonenumber', 'address', 'products']
-
-    def validate_products(self, value):
-        if not value:
-            raise serializers.ValidationError("Список товаров не может быть пустым.")
-        return value
-
-
 @api_view(['POST'])
 def register_order(request):
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-
-    order = Order.objects.create(
-        address=serializer.validated_data['address'],
-        firstname=serializer.validated_data['firstname'],
-        lastname=serializer.validated_data['lastname'],
-        phonenumber=serializer.validated_data['phonenumber']
-    )
-
-    order_detail_fields = serializer.validated_data['items']
-    order_details = []
-
-    for fields in order_detail_fields:
-        product = fields['products']
-        quantity = fields['quantity']
-        order_details.append(OrderDetail(
-            order=order,
-            products=product,
-            quantity=quantity,
-            price=product.price
-        ))
-
-    OrderDetail.objects.bulk_create(order_details)
+    order = serializer.save()
 
     return Response(OrderSerializer(order).data)
