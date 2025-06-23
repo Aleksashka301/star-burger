@@ -7,9 +7,9 @@ from django.urls import reverse_lazy
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
-from environs import Env
 
 from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
+from star_burger import settings
 from .services import get_common_restaurants, get_restaurants_with_distances
 
 
@@ -112,6 +112,7 @@ def view_orders(request):
 
     address_cache = {}
     order_details = []
+    yandex_key = settings.YANDEX_API
 
     for order in orders:
         if order.status == 'completed':
@@ -142,8 +143,3 @@ def view_orders(request):
 
     return render(request, template_name='order_items.html', context={'order_items': order_details})
 
-
-env = Env()
-env.read_env()
-
-yandex_key = env.str('YANDEX_KEY')
