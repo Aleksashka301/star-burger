@@ -138,10 +138,10 @@ class Order(models.Model):
     }
 
     firstname = models.CharField(verbose_name='Имя', max_length=100)
-    lastname = models.CharField(verbose_name='Фамилия', max_length=100, null=True, blank=True)
+    lastname = models.CharField(verbose_name='Фамилия', max_length=100, blank=True)
     phonenumber = PhoneNumberField(region='RU', verbose_name='Телефон')
     address = models.TextField(verbose_name='Адрес')
-    comment = models.TextField(verbose_name='Комментарий', default='', null=True, blank=True)
+    comment = models.TextField(verbose_name='Комментарий', blank=True)
     status = models.CharField(
         choices=ORDER_STATUS_CHOICES,
         default='new',
@@ -164,6 +164,10 @@ class Order(models.Model):
         verbose_name='Ресторан',
     )
     creation = models.DateTimeField(verbose_name='Создание заказа', auto_now_add=True, db_index=True)
+    time_accept = models.DateTimeField(verbose_name='Заказ принят', null=True, blank=True)
+    time_work = models.DateTimeField(verbose_name='Готовка заказа', null=True, blank=True)
+    time_delivery = models.DateTimeField(verbose_name='Доставка заказа', null=True, blank=True)
+    time_completed = models.DateTimeField(verbose_name='Заказ выполнен', null=True, blank=True)
 
     def status_update(self):
         self.status = 'work'
@@ -180,7 +184,7 @@ class OrderDetail(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     products = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='product', verbose_name='Продукт',)
     quantity = models.IntegerField(verbose_name='Количество', validators=[MinValueValidator(1)])
-    price = models.DecimalField(verbose_name='Цена', max_digits=7, decimal_places=2, validators=[MinValueValidator(1)])
+    price = models.DecimalField(verbose_name='Цена', max_digits=7, decimal_places=2, validators=[MinValueValidator(0)])
 
     class Meta:
         verbose_name = 'Детали заказа'
@@ -189,13 +193,3 @@ class OrderDetail(models.Model):
     def __str__(self):
         return f'{self.products}'
 
-
-class OrderTime(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='times')
-    accept = models.DateTimeField(verbose_name='Заказ принят')
-    work = models.DateTimeField(verbose_name='Готовка заказа')
-    delivery = models.DateTimeField(verbose_name='Доставка заказа')
-    completed = models.DateTimeField(verbose_name='Заказ выполнен')
-
-    class Meta:
-        verbose_name = 'Время заказа'
