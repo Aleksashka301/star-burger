@@ -11,7 +11,6 @@ from .models import Restaurant
 from .models import RestaurantMenuItem
 from .models import Order
 from .models import OrderDetail
-from .models import OrderTime
 
 
 class RestaurantMenuItemInline(admin.TabularInline):
@@ -116,26 +115,13 @@ class OrderDetailInLine(admin.TabularInline):
     extra = 0
 
 
-class OrderTimeInLine(admin.TabularInline):
-    model = OrderTime
-    extra = 1
-
-    def has_add_permission(self, request, obj):
-        if obj and obj.times.count() >= 1:
-            return False
-        return super().has_add_permission(request, obj)
-
-    def get_max_num(self, request, obj=None, **kwargs):
-        return 1
-
-
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = ('id', 'firstname', 'lastname', 'address', 'phonenumber', 'status')
     list_filter = ('status',)
     readonly_fields = ['creation']
     autocomplete_fields = ['restaurant']
-    inlines = [OrderDetailInLine, OrderTimeInLine]
+    inlines = [OrderDetailInLine,]
 
     def response_change(self, request, obj):
         next_url = request.GET.get('next')
