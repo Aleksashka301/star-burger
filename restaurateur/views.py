@@ -1,6 +1,7 @@
 from collections import defaultdict
 from django import forms
 from django.db.models import F, Sum
+from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.views import View
 from django.urls import reverse_lazy
@@ -142,4 +143,9 @@ def view_orders(request):
         })
 
     return render(request, template_name='order_items.html', context={'order_items': order_details})
+
+
+def trigger_error(request):
+    division_by_zero = 1 / 0  # Искусственная ошибка
+    return HttpResponse("This won't be reached")
 
