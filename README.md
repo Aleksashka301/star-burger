@@ -153,9 +153,7 @@ Parcel будет следить за файлами в каталоге `bundle
 - `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/3.1/ref/settings/#allowed-hosts)
 - `ROLLBAR_TOKEN` - токен можно получить на сервисе `rollbar.com`, для этого не обходима регистрация
 на сервисе
-- `DB_NAME` - название БД, не обходимо при создании БД и дальнейшем использовании
-- `DB_USER` - пользователь БД. Создаётся перед созданием БД, затем ему нужно задать роли.
-- `DB_PASSWORD` - пароль от БД
+- `DATABASE_URL` - postgresql://your_user:your_password@your_host:your_port/name_db
 
 ## Цели проекта
 
